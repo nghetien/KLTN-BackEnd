@@ -17,15 +17,29 @@
     "url": "https://github.com/nghetien/KLTN-BackEnd/issues"
   },
   "homepage": "https://github.com/nghetien/KLTN-BackEnd#readme",
+  "lint-staged": {
+    "**/**/*.js": "prettier --single-quote --trailing-comma all --tab-width 4 --write"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
   "dependencies": {
     "cors": "^2.8.5",
+    "crypto-js": "^4.1.1",
     "dotenv": "^10.0.0",
     "express": "^4.17.1",
-    "helmet": "^4.6.0",
-    "monk": "^7.3.4",
-    "morgan": "^1.10.0"
+    "google-auth-library": "^7.11.0",
+    "jsonwebtoken": "^8.5.1",
+    "moment": "^2.29.1",
+    "mongoose": "^6.0.15"
   },
   "devDependencies": {
-    "nodemon": "^2.0.15"
+    "husky": "^7.0.4",
+    "lint-staged": "^12.1.2",
+    "morgan": "^1.10.0",
+    "nodemon": "^2.0.15",
+    "prettier": "^2.5.1"
   }
 }
