@@ -65,7 +65,7 @@ class AuthenticationController {
                 status: true,
                 message: "OKE",
                 data: {
-                    token: findTokenAndUpdate.token,
+                    token: token,
                 },
             });
         }
