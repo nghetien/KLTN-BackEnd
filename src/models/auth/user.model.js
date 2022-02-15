@@ -18,7 +18,7 @@ const User = new Schema({
     role: {
         type: String,
         trim: true,
-        required: "Role is required"
+        required: "Chức vụ không được bỏ trống"
     },
     department_code: String,
     major_code: String,

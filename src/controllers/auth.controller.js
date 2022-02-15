@@ -2,15 +2,13 @@ const moment = require("moment");
 const MD5 = require("crypto-js/sha256");
 const { OAuth2Client } = require("google-auth-library");
 
-const Account = require("../models/auth/account.model");
-const AccountToken = require("../models/auth/account_token.model");
-const User = require("../models/user.model");
+const { Account, AccountToken, User } = require("../models");
 const VAR_CONSTANTS = require("../constants/var_constants");
 
-class AuthenticationController {
+class AuthController {
 
     async getTokenUser(req, res) {
-        const { email } = req
+        const { email, avatar } = req.body
         const findTokenAndUpdate = await AccountToken.findOneAndUpdate(
             {
                 email,
@@ -38,7 +36,7 @@ class AuthenticationController {
             const newUser = new User({
                 email: email,
                 full_name: "",
-                avatar: "",
+                avatar: avatar,
                 phone_number: "",
                 role: VAR_CONSTANTS.STUDENT,
                 department_code: "",
@@ -80,7 +78,7 @@ class AuthenticationController {
                 status: true,
             }).exec();
             if (findAccount) {
-                req.email = email;
+                req.body.email = email;
                 next();
             } else {
                 res.status(400).json({
@@ -119,7 +117,8 @@ class AuthenticationController {
                     });
                     await newAccount.save();
                 }
-                req.email = email;
+                req.body.email = email;
+                req.body.avatar = payload.picture;
                 next();
             } else {
                 res.status(500).json({
@@ -199,8 +198,8 @@ class AuthenticationController {
 
     async logout(req, res) {
         try {
-            const { token } = req.body;
-            const result = await AccountToken.findOneAndDelete({ token });
+            const { email } = req.body;
+            const result = await AccountToken.findOneAndDelete({ email });
             if (result) {
                 res.status(200).json({
                     status: true,
@@ -224,4 +223,4 @@ class AuthenticationController {
     }
 }
 
-module.exports = new AuthenticationController();
+module.exports = new AuthController();

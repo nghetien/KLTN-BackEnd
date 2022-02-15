@@ -1,9 +1,9 @@
-const User = require("../models/user.model");
+const { User } = require("../models");
 
 class UserController {
     async getInfoUser(req, res) {
         try {
-            const email = req.email;
+            const { email } = req.body;
             const findUser = await User.findOne({
                 email,
             });
