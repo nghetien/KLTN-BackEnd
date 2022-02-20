@@ -2,14 +2,16 @@ const express = require("express");
 const morgan = require("morgan");
 const dotenv = require("dotenv");
 const cors = require("cors");
+const http = require("http");
+const { Server } = require('socket.io')
 
 const app = express();
+const server = http.createServer(app);
 
 const port = process.env.PORT || 3000;
-// const client = new OAuth2Client(process.env.CLIENT_ID);
 
 dotenv.config();
-app.use(morgan("combined")); /// Nhận biết reload lại trang
+app.use(morgan("combined"));
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -29,7 +31,12 @@ app.get("*", (req, res) => {
   });
 });
 
+/// Socket
+const io = new Server(server);
+const handleSocket = require("./src/socket/index");
+handleSocket(io);
+
 /// Run port
-app.listen(port, () => {
+server.listen(port, () => {
   console.log(`Example app listening at http://localhost:${port}`);
 });

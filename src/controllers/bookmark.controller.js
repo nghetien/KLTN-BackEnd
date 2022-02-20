@@ -28,40 +28,49 @@ class BookmarkController {
         try {
             const { idObject } = req.params;
             const { type, email } = req.body;
-            if (type !== POST && type !== PROBLEM) {
-                res.status(401).json({
-                    status: false,
-                    message: "Type not found",
-                    data: null,
-                });
-            } else {
-                const findBookmark = await Bookmark.findOne({
-                    idObject,
-                    email,
-                }).exec();
-                if (findBookmark) {
-                    findBookmark.status = !findBookmark.status;
-                    await findBookmark.save();
-                    res.status(200).json({
-                        status: true,
-                        message: "OKE",
-                        data: findBookmark,
+            if(idObject){
+                if (type !== POST && type !== PROBLEM) {
+                    res.status(401).json({
+                        status: false,
+                        message: "Type not found",
+                        data: null,
                     });
                 } else {
-                    const newBookmark = new Bookmark({
+                    const findBookmark = await Bookmark.findOne({
                         idObject,
-                        type,
                         email,
-                        status: true,
-                    });
-                    await newBookmark.save();
-                    res.status(200).json({
-                        status: true,
-                        message: "OKE",
-                        data: newBookmark,
-                    });
+                    }).exec();
+                    if (findBookmark) {
+                        findBookmark.status = !findBookmark.status;
+                        await findBookmark.save();
+                        res.status(200).json({
+                            status: true,
+                            message: "OKE",
+                            data: findBookmark,
+                        });
+                    } else {
+                        const newBookmark = new Bookmark({
+                            idObject,
+                            type,
+                            email,
+                            status: true,
+                        });
+                        await newBookmark.save();
+                        res.status(200).json({
+                            status: true,
+                            message: "OKE",
+                            data: newBookmark,
+                        });
+                    }
                 }
+            }else {
+                res.status(400).json({
+                    status: false,
+                    message: "Not found idObject",
+                    data: null,
+                });
             }
+            
         } catch (error) {
             res.status(500).json({
                 status: false,

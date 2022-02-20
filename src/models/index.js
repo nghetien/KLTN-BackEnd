@@ -5,10 +5,15 @@ const Comment = require("./comment/comment.model");
 const PostComment = require("./post/post_comment.model");
 const PostTag = require("./post/post_tag.model");
 const Post = require("./post/post.model");
-const SeriesPost = require("./post/series_post.model");
 const Tag = require("./tag/tag.model");
 const Bookmark = require("./bookmark/bookmark.model");
 const Like = require("./like/like.model");
+const Follow = require("./info/follow.model");
+const Problem = require("./problem/problem.model");
+const ProblemTag = require("./problem/problem_tag.model");
+const ProblemComment = require("./problem/problem_comment.model");
+const Message = require("./message/message.model");
+const Conversation = require("./message/conversation.model");
 
 module.exports = {
     AccountToken,
@@ -18,8 +23,13 @@ module.exports = {
     PostComment,
     PostTag,
     Post,
-    SeriesPost,
     Tag,
     Bookmark,
     Like,
+    Follow,
+    Problem,
+    ProblemTag,
+    ProblemComment,
+    Message,
+    Conversation,
 };

@@ -1,7 +1,7 @@
 const moment = require("moment");
 const { POST } = require("../constants/var_constants");
 
-const { Comment, PostComment, User } = require("../models");
+const { Comment, PostComment, User, ProblemComment } = require("../models");
 
 class CommentController {
     async createComment(req, res) {
@@ -37,12 +37,26 @@ class CommentController {
                         });
                     }
                 } else {
-                    /// TO DO
-                    // res.status(200).json({
-                    //     status: true,
-                    //     message: "TO DO",
-                    //     data: createPost,
-                    // });
+                    const newProblemComment = new ProblemComment({
+                        idProblem: idObject,
+                        email,
+                        idComment: createComment._id.toString(),
+                        status: true,
+                    })
+                    const createProblemComment = await newProblemComment.save();
+                    if (createProblemComment) {
+                        res.status(200).json({
+                            status: true,
+                            message: "OKE",
+                            data: null,
+                        });
+                    } else {
+                        res.status(422).json({
+                            status: false,
+                            message: "Create problem comment failure",
+                            data: null,
+                        });
+                    }
                 }
             } else {
                 res.status(422).json({
@@ -93,7 +107,34 @@ class CommentController {
                     });
                 }
             } else {
-                /// TO DO
+                const findProblemComment = await ProblemComment.findById(idObjectComment).exec();
+                if (findProblemComment && findProblemComment.email === email) {
+                    const findComment = await Comment.findByIdAndUpdate(
+                        findProblemComment.idComment,
+                        {
+                            content: content
+                        }
+                    ).exec();
+                    if (findComment) {
+                        res.status(200).json({
+                            status: true,
+                            message: "OKE",
+                            data: null,
+                        });
+                    } else {
+                        res.status(422).json({
+                            status: false,
+                            message: "Edit comment failure",
+                            data: null,
+                        });
+                    }
+                } else {
+                    res.status(401).json({
+                        status: false,
+                        message: "You don't have permission to edit",
+                        data: null,
+                    });
+                }
             }
         } catch (error) {
             res.status(500).json({
@@ -140,7 +181,36 @@ class CommentController {
                     });
                 }
             } else {
-                /// TO DO
+                const findProblemComment = await ProblemComment.findById(idObjectComment).exec();
+                if (findProblemComment && findProblemComment.email === email) {
+                    findProblemComment.status = false;
+                    await findProblemComment.save();
+                    const findComment = await Comment.findByIdAndUpdate(
+                        findProblemComment.idComment,
+                        {
+                            status: false
+                        }
+                    ).exec();
+                    if (findComment) {
+                        res.status(200).json({
+                            status: true,
+                            message: "OKE",
+                            data: null,
+                        });
+                    } else {
+                        res.status(422).json({
+                            status: false,
+                            message: "Delete comment failure",
+                            data: null,
+                        });
+                    }
+                } else {
+                    res.status(401).json({
+                        status: false,
+                        message: "You don't have permission to edit",
+                        data: null,
+                    });
+                }
             }
         } catch (error) {
             res.status(500).json({
@@ -167,7 +237,16 @@ class CommentController {
                     dataResponse.push(comment);
                 }
             } else {
-                /// TO DO
+                const allProblemComment = await ProblemComment.find({ idPost: idObject, status: true }).exec();
+                for (const problemComment of allProblemComment) {
+                    const comment = await Comment.findById(problemComment.idComment).exec();
+                    const findUser = await User.find({ email: problemComment.email }).exec();
+                    comment._doc.idObjectComment = problemComment._id.toString();
+                    comment._doc.email = problemComment.email;
+                    comment._doc.avatar = findUser[0].avatar ?? '';
+                    comment._doc.lastUpdate = moment(comment._doc.updatedAt).format("X");
+                    dataResponse.push(comment);
+                }
             }
             res.status(200).json({
                 status: true,

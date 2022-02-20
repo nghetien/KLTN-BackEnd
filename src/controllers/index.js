@@ -5,6 +5,10 @@ const TagController = require("./tag.controller");
 const UserController = require("./user.controller");
 const BookmarkController = require("./bookmark.controller");
 const LikeController = require("./like.controller");
+const FollowController = require("./follow.controller");
+const ProblemController = require("./problem.controller");
+const MessController = require("./message.controller");
+const ConversationController = require("./conversation.controller");
 
 module.exports = {
     AuthController,
@@ -14,4 +18,8 @@ module.exports = {
     UserController,
     BookmarkController,
     LikeController,
+    FollowController,
+    ProblemController,
+    MessController,
+    ConversationController,
 }
