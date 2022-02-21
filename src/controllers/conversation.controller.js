@@ -14,7 +14,7 @@ class ConversationController {
                 const emailParticipant = email !== conversation[i].members[0] ?
                     conversation[i].members[0] :
                     conversation[i].members[1];
-                const findUser = await User.findOne({email: emailParticipant}).exec();
+                const findUser = await User.findOne({ email: emailParticipant }).exec();
                 const avatarParticipant = findUser.avatar;
                 const defaultValue = conversation[i]._doc;
                 conversation[i] = {
@@ -27,7 +27,26 @@ class ConversationController {
             res.status(200).json({
                 status: true,
                 message: 'OKE',
-                data: conversation,
+                data: conversation.sort(
+                    (a, b) => {
+                        if (
+                            a.lastMessage &&
+                            a.lastMessage.createdAt
+                        ) {
+                            if (
+                                b.lastMessage &&
+                                b.lastMessage.createdAt
+                            ) {
+                                if (a.lastMessage.createdAt < b.lastMessage.createdAt) {
+                                    return 1;
+                                }
+                                return -1;
+                            }
+                            return -1;
+                        }
+                        return 1;
+                    }
+                ),
             });
         } catch (error) {
             res.status(500).json({

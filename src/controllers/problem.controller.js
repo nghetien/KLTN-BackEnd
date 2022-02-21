@@ -1,7 +1,16 @@
 const moment = require("moment");
-const { PUBLIC } = require("../constants/var_constants");
-
-const { Problem, Tag, ProblemTag, User, Bookmark, Like, Follow, AccountToken, ProblemComment } = require("../models");
+const { NOTIFICATION_NEW_PROBLEM } = require("../constants/var_constants");
+const {
+    Problem,
+    Tag,
+    ProblemTag,
+    User,
+    Bookmark,
+    Like,
+    Follow,
+    AccountToken,
+    ProblemComment
+} = require("../models");
 
 const createListTag = async (listTag) => {
     let listIdTag = []
@@ -170,6 +179,21 @@ class ProblemController {
             const createProblem = await newProblem.save();
             if (createProblem) {
                 await createListProblemTag(listTagId, createProblem._id.toString())
+                const findAllUserFollowedMe = await Follow.find({
+                    emailUserFollow: email
+                }).exec();
+                for (const user of findAllUserFollowedMe) {
+                    const newNotification = new Notification(
+                        {
+                            emailReceiver: user.email,
+                            emailSender: email,
+                            type: NOTIFICATION_NEW_PROBLEM,
+                            redirectUrl: createProblem._id.toString(),
+                            isChecked: false,
+                        }
+                    );
+                    await newNotification.save();
+                }
                 res.status(200).json({
                     status: true,
                     message: "OKE",

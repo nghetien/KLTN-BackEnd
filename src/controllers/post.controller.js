@@ -1,7 +1,18 @@
 const moment = require("moment");
-const { PUBLIC } = require("../constants/var_constants");
+const { PUBLIC, NOTIFICATION_NEW_POST } = require("../constants/var_constants");
 
-const { Post, Tag, PostTag, User, PostComment, Bookmark, Like, Follow, AccountToken } = require("../models");
+const {
+    Post,
+    Tag,
+    PostTag,
+    User,
+    PostComment,
+    Bookmark,
+    Like,
+    Follow,
+    AccountToken,
+    Notification,
+} = require("../models");
 
 const createListTag = async (listTag) => {
     let listIdTag = []
@@ -162,6 +173,21 @@ class PostController {
             const createPost = await newPost.save();
             if (createPost) {
                 await createListPostTag(listTagId, createPost._id.toString())
+                const findAllUserFollowedMe = await Follow.find({
+                    emailUserFollow: email
+                }).exec();
+                for (const user of findAllUserFollowedMe) {
+                    const newNotification = new Notification(
+                        {
+                            emailReceiver: user.email,
+                            emailSender: email,
+                            type: NOTIFICATION_NEW_POST,
+                            redirectUrl: createPost._id.toString(),
+                            isChecked: false,
+                        }
+                    );
+                    await newNotification.save();
+                }
                 res.status(200).json({
                     status: true,
                     message: "OKE",

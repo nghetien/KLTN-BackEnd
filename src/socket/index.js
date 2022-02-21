@@ -21,7 +21,6 @@ const removeUser = (socketId) => {
 };
 
 const getUser = (email) => {
-    console.log('email: ', email, ' trong ', users)
     return users.find((user) => user.email === email);
 };
 
@@ -32,7 +31,6 @@ const handleSocket = (io) => {
 
         socket.on(ADD_USER, (email) => {
             addUser(email, socket.id);
-            io.emit(GET_USER, users);
         });
 
         socket.on(SEND_MESSAGE, ({ emailSender, emailReceiver, text, type, createdAt, messageId }) => {

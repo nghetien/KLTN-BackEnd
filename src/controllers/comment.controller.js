@@ -1,7 +1,20 @@
 const moment = require("moment");
-const { POST } = require("../constants/var_constants");
-
-const { Comment, PostComment, User, ProblemComment } = require("../models");
+const {
+    POST,
+    NOTIFICATION_COMMENT_POST,
+    NOTIFICATION_COMMENT_PROBLEM,
+    NOTIFICATION_YOUR_POST,
+    NOTIFICATION_YOUR_PROBLEM,
+} = require("../constants/var_constants");
+const {
+    Post,
+    Problem,
+    Comment,
+    PostComment,
+    User,
+    ProblemComment,
+    Notification,
+} = require("../models");
 
 class CommentController {
     async createComment(req, res) {
@@ -16,6 +29,35 @@ class CommentController {
             const createComment = await newComment.save();
             if (createComment) {
                 if (type === POST) {
+                    const findOwnerOfPost = await Post.findById(idObject).exec();
+                    const emailOwnerOfPost = findOwnerOfPost.email;
+                    const newNotificationForOwner = new Notification(
+                        {
+                            emailReceiver: emailOwnerOfPost,
+                            emailSender: email,
+                            type: NOTIFICATION_YOUR_POST,
+                            redirectUrl: idObject,
+                            isChecked: false,
+                        }
+                    );
+                    newNotificationForOwner.save();
+                    const findAllPostCommentOfPost = await PostComment.find({
+                        idPost: idObject,
+                    }).exec();
+                    for (const user of findAllPostCommentOfPost) {
+                        if (user.email !== email && emailOwnerOfPost !== user.email) {
+                            const newNotification = new Notification(
+                                {
+                                    emailReceiver: user.email,
+                                    emailSender: email,
+                                    type: NOTIFICATION_COMMENT_POST,
+                                    redirectUrl: idObject,
+                                    isChecked: false,
+                                }
+                            );
+                            newNotification.save();
+                        }
+                    }
                     const newPostComment = new PostComment({
                         idPost: idObject,
                         email,
@@ -37,6 +79,35 @@ class CommentController {
                         });
                     }
                 } else {
+                    const findOwnerOfProblem = await Problem.findById(idObject).exec();
+                    const emailOwnerOfProblem = findOwnerOfProblem.email;
+                    const newNotificationForOwner = new Notification(
+                        {
+                            emailReceiver: emailOwnerOfProblem,
+                            emailSender: email,
+                            type: NOTIFICATION_YOUR_PROBLEM,
+                            redirectUrl: idObject,
+                            isChecked: false,
+                        }
+                    );
+                    newNotificationForOwner.save();
+                    const findAllPostProblemOfProblem = await ProblemComment.find({
+                        idProblem: idObject,
+                    }).exec();
+                    for (const user of findAllPostProblemOfProblem) {
+                        if (user.email !== email && user.email !== emailOwnerOfProblem) {
+                            const newNotification = new Notification(
+                                {
+                                    emailReceiver: user.email,
+                                    emailSender: email,
+                                    type: NOTIFICATION_COMMENT_PROBLEM,
+                                    redirectUrl: idObject,
+                                    isChecked: false,
+                                }
+                            );
+                            await newNotification.save();
+                        }
+                    }
                     const newProblemComment = new ProblemComment({
                         idProblem: idObject,
                         email,
@@ -227,6 +298,7 @@ class CommentController {
             let dataResponse = []
             if (type === POST) {
                 const allPostComment = await PostComment.find({ idPost: idObject, status: true }).exec();
+                console.log('all post', allPostComment)
                 for (const postComment of allPostComment) {
                     const comment = await Comment.findById(postComment.idComment).exec();
                     const findUser = await User.find({ email: postComment.email }).exec();

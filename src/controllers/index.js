@@ -9,6 +9,7 @@ const FollowController = require("./follow.controller");
 const ProblemController = require("./problem.controller");
 const MessController = require("./message.controller");
 const ConversationController = require("./conversation.controller");
+const NotificationController = require("./notification.controller");
 
 module.exports = {
     AuthController,
@@ -22,4 +23,5 @@ module.exports = {
     ProblemController,
     MessController,
     ConversationController,
+    NotificationController,
 }
