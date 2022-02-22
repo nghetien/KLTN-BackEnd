@@ -1,12 +1,14 @@
-const { 
+const {
     GET_USER,
-    ADD_USER, 
+    ADD_USER,
     SEND_MESSAGE,
     GET_MESSAGE,
     EDIT_MESSAGE,
     GET_EDIT_MESSAGE,
     DELETE_MESSAGE,
     GET_DELETE_MESSAGE,
+    SEND_NOTIFICATION,
+    GET_NOTIFICATION,
 } = require("../constants/var_constants");
 
 let users = [];
@@ -31,11 +33,12 @@ const handleSocket = (io) => {
 
         socket.on(ADD_USER, (email) => {
             addUser(email, socket.id);
+            io.emit(GET_USER, users);
         });
 
         socket.on(SEND_MESSAGE, ({ emailSender, emailReceiver, text, type, createdAt, messageId }) => {
             const user = getUser(emailReceiver);
-            if(user && user.socketId && user.email){
+            if (user && user.socketId && user.email) {
                 io.to(user.socketId).emit(GET_MESSAGE, {
                     emailSender,
                     text,
@@ -48,7 +51,7 @@ const handleSocket = (io) => {
 
         socket.on(EDIT_MESSAGE, ({ emailSender, emailReceiver, messageId, text, updatedAt }) => {
             const user = getUser(emailReceiver);
-            if(user && user.socketId && user.email){
+            if (user && user.socketId && user.email) {
                 io.to(user.socketId).emit(GET_EDIT_MESSAGE, {
                     emailSender,
                     messageId,
@@ -60,7 +63,7 @@ const handleSocket = (io) => {
 
         socket.on(DELETE_MESSAGE, ({ emailSender, emailReceiver, messageId, updatedAt }) => {
             const user = getUser(emailReceiver);
-            if(user && user.socketId && user.email){
+            if (user && user.socketId && user.email) {
                 io.to(user.socketId).emit(GET_DELETE_MESSAGE, {
                     emailSender,
                     messageId,
@@ -69,6 +72,13 @@ const handleSocket = (io) => {
             }
         })
 
+        socket.on(SEND_NOTIFICATION, ({ emailReceiver }) => {
+            const user = getUser(emailReceiver);
+            if (user && user.socketId && user.email) {
+                console.log('gui di k ta ???');
+                io.to(user.socketId).emit(GET_NOTIFICATION);
+            }
+        })
 
         /// user disconnected
         socket.on("disconnect", () => {

@@ -14,5 +14,6 @@ router.use('/problem', require('./problem.route'));
 router.use('/message', require('./message.route'));
 router.use('/conversation', require('./conversation.route'));
 router.use('/notification', require('./notification.route'));
+router.use('/notification-message', require('./notification_message.route'));
 
 module.exports = router;

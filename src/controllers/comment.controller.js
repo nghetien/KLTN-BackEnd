@@ -298,7 +298,6 @@ class CommentController {
             let dataResponse = []
             if (type === POST) {
                 const allPostComment = await PostComment.find({ idPost: idObject, status: true }).exec();
-                console.log('all post', allPostComment)
                 for (const postComment of allPostComment) {
                     const comment = await Comment.findById(postComment.idComment).exec();
                     const findUser = await User.find({ email: postComment.email }).exec();

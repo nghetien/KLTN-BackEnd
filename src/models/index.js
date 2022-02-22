@@ -13,6 +13,7 @@ const Problem = require("./problem/problem.model");
 const ProblemTag = require("./problem/problem_tag.model");
 const ProblemComment = require("./problem/problem_comment.model");
 const Message = require("./message/message.model");
+const NotificationMessage = require("./message/notification_message.model");
 const Conversation = require("./message/conversation.model");
 const Notification = require("./notification/notification.model");
 
@@ -32,6 +33,7 @@ module.exports = {
     ProblemTag,
     ProblemComment,
     Message,
+    NotificationMessage,
     Conversation,
     Notification,
 };
