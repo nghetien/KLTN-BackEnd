@@ -10,6 +10,7 @@ const Problem = new Schema({
         type: String,
         trim: true,
         required: "Tên câu hỏi không được bỏ trống",
+        unique: true,
     },
     shortContent: String,
     content: {

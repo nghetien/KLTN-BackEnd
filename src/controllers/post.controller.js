@@ -86,64 +86,92 @@ const dataResponseFromList = async (allPost) => {
 
 class PostController {
 
+    async countMaxPagePost(req, res) {
+        try {
+            const { queryUserFollow } = req.query;
+            let dataQuery = {
+                statusPost: PUBLIC,
+                status: true
+            };
+            if (queryUserFollow) {
+                const { token } = req.headers;
+                const findUser = await AccountToken.findOneAndUpdate(
+                    {
+                        token,
+                    },
+                    {
+                        time_create: moment().unix(),
+                        expiration_date: moment().unix() + 30 * 24 * 60 * 60,
+                    }
+                ).exec();
+                const email = findUser.email;
+                const findAllMyUserFollowed = await Follow.find({ email, status: true }).exec();
+                dataQuery = {
+                    ...dataQuery,
+                    ...{
+                        email: {
+                            $in: findAllMyUserFollowed.map(user => user.emailUserFollow),
+                        },
+                    }
+                }
+            }
+            const allPost = await Post.find(dataQuery).exec();
+            res.status(200).json({
+                status: true,
+                message: "OKE",
+                data: allPost.length,
+            });
+        } catch (e) {
+            res.status(500).json({
+                status: false,
+                message: error.toString(),
+                data: null,
+            });
+        }
+    }
+
     async getAllPost(req, res) {
         try {
-            const { queryFollow } = req.query
-            let dataResponse = []
-            if (queryFollow) {
+            const { queryUserFollow, pagePost } = req.query;
+            let dataResponse = [];
+            let dataQuery = {
+                statusPost: PUBLIC,
+                status: true
+            };
+            if (queryUserFollow) {
                 const { token } = req.headers;
-                if (token) {
-                    const findTokenAndUpdate = await AccountToken.findOneAndUpdate(
-                        {
-                            token,
-                        },
-                        {
-                            time_create: moment().unix(),
-                            expiration_date: moment().unix() + 30 * 24 * 60 * 60,
-                        }
-                    ).exec();
-                    const email = findTokenAndUpdate.email;
-                    if (email) {
-                        const findAllMyUserFollowed = await Follow.find({ email, status: true }).exec()
-                        for (const userFollowed of findAllMyUserFollowed) {
-                            const allPost = await Post.find({
-                                statusPost: PUBLIC,
-                                email: userFollowed.emailUserFollow,
-                                status: true
-                            }).exec();
-                            const dataPost = await dataResponseFromList(allPost);
-                            dataResponse = [...dataResponse, ...dataPost];
-                        }
-                        dataResponse = dataResponse.sort((a, b) => b.timeCreate - a.timeCreate);
-                        res.status(200).json({
-                            status: true,
-                            message: "OKE",
-                            data: dataResponse,
-                        });
-                    } else {
-                        res.status(401).json({
-                            status: false,
-                            message: "Token is out of expiration date",
-                            data: "",
-                        });
+                const findUser = await AccountToken.findOneAndUpdate(
+                    {
+                        token,
+                    },
+                    {
+                        time_create: moment().unix(),
+                        expiration_date: moment().unix() + 30 * 24 * 60 * 60,
                     }
-                } else {
-                    res.status(401).json({
-                        status: false,
-                        message: "Token is out of expiration date",
-                        data: "",
-                    });
+                ).exec();
+                const email = findUser.email;
+                const findAllMyUserFollowed = await Follow.find({ email, status: true }).exec();
+                dataQuery = {
+                    ...dataQuery,
+                    ...{
+                        email: {
+                            $in: findAllMyUserFollowed.map(user => user.emailUserFollow),
+                        },
+                    }
                 }
-            } else {
-                const allPost = await Post.find({ statusPost: PUBLIC, status: true }).exec();
-                dataResponse = await dataResponseFromList(allPost);
-                dataResponse = dataResponse.sort((a, b) => b.timeCreate - a.timeCreate);
-                res.status(200).json({
-                    status: true,
-                    message: "OKE",
-                    data: dataResponse,
-                });
             }
+            const allPost = await Post.find(dataQuery)
+                .sort({ 'timeCreate': -1 })
+                .limit(10)
+                .skip(pagePost ? pagePost * 10 : 0)
+                .exec();
+            dataResponse = await dataResponseFromList(allPost);
+            dataResponse = dataResponse.sort((a, b) => b.timeCreate - a.timeCreate);
+            res.status(200).json({
+                status: true,
+                message: "OKE",
+                data: dataResponse,
+            });
         } catch (error) {
             res.status(500).json({
                 status: false,

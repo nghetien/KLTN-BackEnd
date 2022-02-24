@@ -31,31 +31,42 @@ class CommentController {
                 if (type === POST) {
                     const findOwnerOfPost = await Post.findById(idObject).exec();
                     const emailOwnerOfPost = findOwnerOfPost.email;
-                    const newNotificationForOwner = new Notification(
-                        {
-                            emailReceiver: emailOwnerOfPost,
-                            emailSender: email,
-                            type: NOTIFICATION_YOUR_POST,
-                            redirectUrl: idObject,
-                            isChecked: false,
-                        }
-                    );
-                    newNotificationForOwner.save();
+                    if (emailOwnerOfPost !== email) {
+                        const newNotificationForOwner = new Notification(
+                            {
+                                emailReceiver: emailOwnerOfPost,
+                                emailSender: email,
+                                type: NOTIFICATION_YOUR_POST,
+                                redirectUrl: idObject,
+                                isChecked: false,
+                            }
+                        );
+                        newNotificationForOwner.save();
+                    };
                     const findAllPostCommentOfPost = await PostComment.find({
                         idPost: idObject,
+                        status: true,
                     }).exec();
+                    const allUser = [];
                     for (const user of findAllPostCommentOfPost) {
-                        if (user.email !== email && emailOwnerOfPost !== user.email) {
-                            const newNotification = new Notification(
-                                {
-                                    emailReceiver: user.email,
-                                    emailSender: email,
-                                    type: NOTIFICATION_COMMENT_POST,
-                                    redirectUrl: idObject,
-                                    isChecked: false,
-                                }
-                            );
-                            newNotification.save();
+                        if (
+                            user.email !== email &&
+                            emailOwnerOfPost !== user.email &&
+                            email !== user.email
+                        ) {
+                            if (!allUser.includes(user.email)) {
+                                allUser.push(user.email);
+                                const newNotification = new Notification(
+                                    {
+                                        emailReceiver: user.email,
+                                        emailSender: email,
+                                        type: NOTIFICATION_COMMENT_POST,
+                                        redirectUrl: idObject,
+                                        isChecked: false,
+                                    }
+                                );
+                                newNotification.save();
+                            }
                         }
                     }
                     const newPostComment = new PostComment({
@@ -81,31 +92,42 @@ class CommentController {
                 } else {
                     const findOwnerOfProblem = await Problem.findById(idObject).exec();
                     const emailOwnerOfProblem = findOwnerOfProblem.email;
-                    const newNotificationForOwner = new Notification(
-                        {
-                            emailReceiver: emailOwnerOfProblem,
-                            emailSender: email,
-                            type: NOTIFICATION_YOUR_PROBLEM,
-                            redirectUrl: idObject,
-                            isChecked: false,
-                        }
-                    );
-                    newNotificationForOwner.save();
+                    if (emailOwnerOfProblem !== email) {
+                        const newNotificationForOwner = new Notification(
+                            {
+                                emailReceiver: emailOwnerOfProblem,
+                                emailSender: email,
+                                type: NOTIFICATION_YOUR_PROBLEM,
+                                redirectUrl: idObject,
+                                isChecked: false,
+                            }
+                        );
+                        newNotificationForOwner.save();
+                    }
                     const findAllPostProblemOfProblem = await ProblemComment.find({
                         idProblem: idObject,
+                        status: true,
                     }).exec();
+                    const allUser = [];
                     for (const user of findAllPostProblemOfProblem) {
-                        if (user.email !== email && user.email !== emailOwnerOfProblem) {
-                            const newNotification = new Notification(
-                                {
-                                    emailReceiver: user.email,
-                                    emailSender: email,
-                                    type: NOTIFICATION_COMMENT_PROBLEM,
-                                    redirectUrl: idObject,
-                                    isChecked: false,
-                                }
-                            );
-                            await newNotification.save();
+                        if (
+                            user.email !== email &&
+                            user.email !== emailOwnerOfProblem &&
+                            email !== user.email
+                        ) {
+                            if (!allUser.includes(user.email)) {
+                                allUser.push(user.email);
+                                const newNotification = new Notification(
+                                    {
+                                        emailReceiver: user.email,
+                                        emailSender: email,
+                                        type: NOTIFICATION_COMMENT_PROBLEM,
+                                        redirectUrl: idObject,
+                                        isChecked: false,
+                                    }
+                                );
+                                await newNotification.save();
+                            }
                         }
                     }
                     const newProblemComment = new ProblemComment({

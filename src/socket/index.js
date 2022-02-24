@@ -75,7 +75,6 @@ const handleSocket = (io) => {
         socket.on(SEND_NOTIFICATION, ({ emailReceiver }) => {
             const user = getUser(emailReceiver);
             if (user && user.socketId && user.email) {
-                console.log('gui di k ta ???');
                 io.to(user.socketId).emit(GET_NOTIFICATION);
             }
         })

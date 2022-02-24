@@ -9,7 +9,8 @@ const {
     Like,
     Follow,
     AccountToken,
-    ProblemComment
+    ProblemComment,
+    Notification,
 } = require("../models");
 
 const createListTag = async (listTag) => {
@@ -84,72 +85,106 @@ const getAllProblemFromListData = async (allProblem) => {
 
 class ProblemController {
 
-    async getAllProblem(req, res) {
+    async countMaxPageProblem(req, res) {
         try {
-            const { queryFollow, isHaveCorrectAnswer } = req.query
-            let dataResponse = []
+            const { queryFollow, isHaveCorrectAnswer } = req.query;
+            let dataQuery = {
+                status: true
+            };
             if (queryFollow) {
                 const { token } = req.headers;
-                if (token) {
-                    const findTokenAndUpdate = await AccountToken.findOneAndUpdate(
-                        {
-                            token,
-                        },
-                        {
-                            time_create: moment().unix(),
-                            expiration_date: moment().unix() + 30 * 24 * 60 * 60,
-                        }
-                    ).exec();
-                    const email = findTokenAndUpdate.email;
-                    if (email) {
-                        const findAllMyUserFollowed = await Follow.find({ email, status: true }).exec()
-                        for (const userFollowed of findAllMyUserFollowed) {
-                            const allProblem = await Problem.find({
-                                email: userFollowed.emailUserFollow,
-                                status: true,
-                            }).exec();
-                            const dataProblem = await getAllProblemFromListData(allProblem)
-                            dataResponse = [...dataResponse, ...dataProblem]
-                        }
-                        dataResponse = dataResponse.sort((a, b) => b.timeCreate - a.timeCreate);
-                        res.status(200).json({
-                            status: true,
-                            message: "OKE",
-                            data: dataResponse,
-                        });
-                    } else {
-                        res.status(401).json({
-                            status: false,
-                            message: "Token is out of expiration date",
-                            data: "",
-                        });
+                const findUser = await AccountToken.findOneAndUpdate(
+                    {
+                        token,
+                    },
+                    {
+                        time_create: moment().unix(),
+                        expiration_date: moment().unix() + 30 * 24 * 60 * 60,
                     }
-                } else {
-                    res.status(401).json({
-                        status: false,
-                        message: "Token is out of expiration date",
-                        data: "",
-                    });
+                ).exec();
+                const email = findUser.email;
+                const findAllMyUserFollowed = await Follow.find({ email, status: true }).exec();
+                dataQuery = {
+                    ...dataQuery,
+                    ...{
+                        email: {
+                            $in: findAllMyUserFollowed.map(user => user.emailUserFollow),
+                        },
+                    }
                 }
-            } else {
-                let dataQuery = {}
-                if (isHaveCorrectAnswer !== undefined) {
-                    dataQuery = {
+            }
+            if (isHaveCorrectAnswer !== undefined) {
+                dataQuery = {
+                    ...dataQuery,
+                    ...{
                         isHaveCorrectAnswer
                     }
                 }
-                const allProblem = await Problem.find({
-                    ...dataQuery,
-                    status: true,
-                }).exec();
-                dataResponse = await getAllProblemFromListData(allProblem);
-                dataResponse = dataResponse.sort((a, b) => b.timeCreate - a.timeCreate);
-                res.status(200).json({
-                    status: true,
-                    message: "OKE",
-                    data: dataResponse,
-                });
             }
+            const allProblem = await Problem.find(dataQuery).exec();
+            res.status(200).json({
+                status: true,
+                message: "OKE",
+                data: allProblem.length,
+            });
+        } catch (e) {
+            res.status(500).json({
+                status: false,
+                message: error.toString(),
+                data: null,
+            });
+        }
+    }
+
+    async getAllProblem(req, res) {
+        try {
+            const { queryFollow, isHaveCorrectAnswer, pageProblem } = req.query;
+            let dataResponse = [];
+            let dataQuery = {
+                status: true
+            };
+            if (queryFollow) {
+                const { token } = req.headers;
+                const findUser = await AccountToken.findOneAndUpdate(
+                    {
+                        token,
+                    },
+                    {
+                        time_create: moment().unix(),
+                        expiration_date: moment().unix() + 30 * 24 * 60 * 60,
+                    }
+                ).exec();
+                const email = findUser.email;
+                const findAllMyUserFollowed = await Follow.find({ email, status: true }).exec();
+                dataQuery = {
+                    ...dataQuery,
+                    ...{
+                        email: {
+                            $in: findAllMyUserFollowed.map(user => user.emailUserFollow),
+                        },
+                    }
+                }
+            }
+            if (isHaveCorrectAnswer !== undefined) {
+                dataQuery = {
+                    ...dataQuery,
+                    ...{
+                        isHaveCorrectAnswer
+                    }
+                }
+            }
+            const allProblem = await Problem.find(dataQuery)
+                .sort({ 'timeCreate': -1 })
+                .limit(10)
+                .skip(pageProblem ? pageProblem * 10 : 0)
+                .exec();
+            dataResponse = await getAllProblemFromListData(allProblem);
+            dataResponse = dataResponse.sort((a, b) => b.timeCreate - a.timeCreate);
+            res.status(200).json({
+                status: true,
+                message: "OKE",
+                data: dataResponse,
+            });
         } catch (error) {
             res.status(500).json({
                 status: false,

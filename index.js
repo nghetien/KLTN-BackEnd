@@ -3,11 +3,12 @@ const morgan = require("morgan");
 const dotenv = require("dotenv");
 const cors = require("cors");
 const http = require("http");
+const multer = require('multer');
 const { Server } = require('socket.io')
 
 const app = express();
 const server = http.createServer(app);
-
+const upload = multer();
 const port = process.env.PORT || 3000;
 
 dotenv.config();
@@ -15,6 +16,8 @@ app.use(morgan("combined"));
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+// app.use(upload.array());
+// app.use(express.static('public'));
 
 /// Connect MongoDB
 const mongoDb = require("./src/configs/db.config");

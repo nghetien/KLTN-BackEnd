@@ -25,7 +25,6 @@ class NotificationMessageController {
     async checkNotification(req, res) {
         try {
             const { email, emailReceiver, idNotification } = req.body;
-            console.log({ email, emailReceiver, idNotification });
             if(idNotification){
                 const checkNotification = await NotificationMessage.findByIdAndUpdate(
                     idNotification,

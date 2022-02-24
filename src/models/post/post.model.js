@@ -10,6 +10,7 @@ const Post = new Schema({
         type: String,
         trim: true,
         required: "Tên post không được bỏ trống",
+        unique: true,
     },
     shortContent: String,
     content: {
