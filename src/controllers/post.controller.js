@@ -32,59 +32,48 @@ const createListTag = async (listTag) => {
     return listIdTag;
 }
 
-const createListPostTag = async (listIdTag, idPost) => {
-    for (const idTag of listIdTag) {
-        const newPostTag = new PostTag({
-            idPost,
-            idTag,
-            status: true,
-        });
-        await newPostTag.save();
-    }
-}
-
-const dataResponseFromList = async (allPost) => {
-    let dataResponse = []
-    for (const post of allPost) {
-        const listPostTag = await PostTag.find({ idPost: post._id.toString() }).exec();
-        const tags = []
-        for (const postTag of listPostTag) {
-            const tag = await Tag.findById(postTag.idTag).exec();
-            tags.push({
-                _id: tag._id.toString(),
-                content: tag.content,
-                status: tag.status,
-            })
-        }
-        const findUser = await User.find({ email: post.email }).exec();
-        const findPostComment = await PostComment.find({ idPost: post._id.toString(), status: true }).exec();
-        const findBookmark = await Bookmark.find({ idObject: post._id.toString(), status: true }).exec();
-        const countLike = await Like.find({ idObject: post._id.toString(), isLike: true }).exec();
-        const countDislike = await Like.find({ idObject: post._id.toString(), isLike: false }).exec();
-        dataResponse.push({
-            _id: post._id.toString(),
-            email: post.email,
-            namePost: post.namePost,
-            shortContent: post.shortContent,
-            content: post.content,
-            typeContent: post.typeContent,
-            timeCreate: post.timeCreate,
-            lastUpdate: post.lastUpdate,
-            view: post.view,
-            like: countLike.length,
-            comment: findPostComment.length,
-            dislike: countDislike.length,
-            bookmark: findBookmark.length,
-            status: post.status,
-            statusPost: post.statusPost,
-            tags,
-            avatar: findUser[0].avatar ?? '',
-        })
-    };
-    return dataResponse;
-}
-
 class PostController {
+
+    async dataResponseFromList(allPost) {
+        let dataResponse = []
+        for (const post of allPost) {
+            const listPostTag = await PostTag.find({ idPost: post._id.toString() }).exec();
+            const tags = []
+            for (const postTag of listPostTag) {
+                const tag = await Tag.findById(postTag.idTag).exec();
+                tags.push({
+                    _id: tag._id.toString(),
+                    content: tag.content,
+                    status: tag.status,
+                })
+            }
+            const findUser = await User.find({ email: post.email }).exec();
+            const findPostComment = await PostComment.find({ idPost: post._id.toString(), status: true }).exec();
+            const findBookmark = await Bookmark.find({ idObject: post._id.toString(), status: true }).exec();
+            const countLike = await Like.find({ idObject: post._id.toString(), isLike: true }).exec();
+            const countDislike = await Like.find({ idObject: post._id.toString(), isLike: false }).exec();
+            dataResponse.push({
+                _id: post._id.toString(),
+                email: post.email,
+                namePost: post.namePost,
+                shortContent: post.shortContent,
+                content: post.content,
+                typeContent: post.typeContent,
+                timeCreate: post.timeCreate,
+                lastUpdate: post.lastUpdate,
+                view: post.view,
+                like: countLike.length,
+                comment: findPostComment.length,
+                dislike: countDislike.length,
+                bookmark: findBookmark.length,
+                status: post.status,
+                statusPost: post.statusPost,
+                tags,
+                avatar: findUser[0].avatar ?? '',
+            })
+        };
+        return dataResponse;
+    }
 
     async countMaxPagePost(req, res) {
         try {
@@ -121,7 +110,7 @@ class PostController {
                 message: "OKE",
                 data: allPost.length,
             });
-        } catch (e) {
+        } catch (error) {
             res.status(500).json({
                 status: false,
                 message: error.toString(),
@@ -130,7 +119,33 @@ class PostController {
         }
     }
 
-    async getAllPost(req, res) {
+    managerPost = async (req, res) => {
+        try {
+            const { email } = req.body;
+            const findUser = await User.findOne({ email }).exec();
+            let allPost = [];
+            if (findUser && findUser.role === 'ADMIN') {
+                allPost = await Post.find().exec();
+            } else {
+                allPost = await Post.find({ email }).exec();
+            }
+            let dataResponse = await this.dataResponseFromList(allPost);
+            dataResponse = dataResponse.sort((a, b) => b.timeCreate - a.timeCreate);
+            res.status(200).json({
+                status: true,
+                message: "OKE",
+                data: dataResponse,
+            });
+        } catch (error) {
+            res.status(500).json({
+                status: false,
+                message: error.toString(),
+                data: null,
+            });
+        }
+    }
+
+    getAllPost = async (req, res) => {
         try {
             const { queryUserFollow, pagePost } = req.query;
             let dataResponse = [];
@@ -165,7 +180,7 @@ class PostController {
                 .limit(10)
                 .skip(pagePost ? pagePost * 10 : 0)
                 .exec();
-            dataResponse = await dataResponseFromList(allPost);
+            dataResponse = await this.dataResponseFromList(allPost);
             dataResponse = dataResponse.sort((a, b) => b.timeCreate - a.timeCreate);
             res.status(200).json({
                 status: true,
@@ -179,7 +194,6 @@ class PostController {
                 data: null,
             });
         }
-
     }
 
     async createPost(req, res) {

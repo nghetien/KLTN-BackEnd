@@ -5,6 +5,7 @@ const {
     Tag,
     PostTag,
     ProblemTag,
+    User
 } = require("../models");
 
 class SearchController {
@@ -80,6 +81,29 @@ class SearchController {
                 ...dataPost,
                 ...dataProblem,
             ]
+            res.status(200).json({
+                status: true,
+                message: 'OKE',
+                data: dataResponse,
+            })
+        } catch (error) {
+            res.status(500).json({
+                status: false,
+                message: error.toString(),
+                data: null,
+            });
+        }
+    }
+
+    async searchUser(req, res) {
+        try {
+            const { keyword } = req.query;
+            const lowSearch = keyword.toLowerCase().trim();
+            const allUser = await User.find().exec();
+            let dataResponse = [];
+            dataResponse = allUser.filter(user => {
+                return String(user.email).toLowerCase().includes(lowSearch)
+            })
             res.status(200).json({
                 status: true,
                 message: 'OKE',

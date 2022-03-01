@@ -42,48 +42,48 @@ const createListProblemTag = async (listIdTag, idProblem) => {
     }
 }
 
-const getAllProblemFromListData = async (allProblem) => {
-    let dataResponse = []
-    for (const problem of allProblem) {
-        const listProblemTag = await ProblemTag.find({ idProblem: problem._id.toString() }).exec();
-        const tags = []
-        for (const problemTag of listProblemTag) {
-            const tag = await Tag.findById(problemTag.idTag).exec();
-            tags.push({
-                _id: tag._id.toString(),
-                content: tag.content,
-                status: tag.status,
-            })
-        }
-        const findUser = await User.find({ email: problem.email }).exec();
-        const findProblemComment = await ProblemComment.find({ idProblem: problem._id.toString(), status: true }).exec();
-        const findBookmark = await Bookmark.find({ idObject: problem._id.toString(), status: true }).exec();
-        const countLike = await Like.find({ idObject: problem._id.toString(), isLike: true }).exec();
-        const countDislike = await Like.find({ idObject: problem._id.toString(), isLike: false }).exec();
-        dataResponse.push({
-            _id: problem._id.toString(),
-            email: problem.email,
-            nameProblem: problem.nameProblem,
-            shortContent: problem.shortContent,
-            content: problem.content,
-            typeContent: problem.typeContent,
-            timeCreate: problem.timeCreate,
-            lastUpdate: problem.lastUpdate,
-            view: problem.view,
-            like: countLike.length,
-            comment: findProblemComment.length,
-            dislike: countDislike.length,
-            bookmark: findBookmark.length,
-            status: problem.status,
-            isHaveCorrectAnswer: problem.isHaveCorrectAnswer,
-            tags,
-            avatar: findUser[0].avatar ?? '',
-        })
-    };
-    return dataResponse;
-}
-
 class ProblemController {
+
+    async getAllProblemFromListData(allProblem) {
+        let dataResponse = []
+        for (const problem of allProblem) {
+            const listProblemTag = await ProblemTag.find({ idProblem: problem._id.toString() }).exec();
+            const tags = []
+            for (const problemTag of listProblemTag) {
+                const tag = await Tag.findById(problemTag.idTag).exec();
+                tags.push({
+                    _id: tag._id.toString(),
+                    content: tag.content,
+                    status: tag.status,
+                })
+            }
+            const findUser = await User.find({ email: problem.email }).exec();
+            const findProblemComment = await ProblemComment.find({ idProblem: problem._id.toString(), status: true }).exec();
+            const findBookmark = await Bookmark.find({ idObject: problem._id.toString(), status: true }).exec();
+            const countLike = await Like.find({ idObject: problem._id.toString(), isLike: true }).exec();
+            const countDislike = await Like.find({ idObject: problem._id.toString(), isLike: false }).exec();
+            dataResponse.push({
+                _id: problem._id.toString(),
+                email: problem.email,
+                nameProblem: problem.nameProblem,
+                shortContent: problem.shortContent,
+                content: problem.content,
+                typeContent: problem.typeContent,
+                timeCreate: problem.timeCreate,
+                lastUpdate: problem.lastUpdate,
+                view: problem.view,
+                like: countLike.length,
+                comment: findProblemComment.length,
+                dislike: countDislike.length,
+                bookmark: findBookmark.length,
+                status: problem.status,
+                isHaveCorrectAnswer: problem.isHaveCorrectAnswer,
+                tags,
+                avatar: findUser[0].avatar ?? '',
+            })
+        };
+        return dataResponse;
+    }
 
     async countMaxPageProblem(req, res) {
         try {
@@ -127,7 +127,7 @@ class ProblemController {
                 message: "OKE",
                 data: allProblem.length,
             });
-        } catch (e) {
+        } catch (error) {
             res.status(500).json({
                 status: false,
                 message: error.toString(),
@@ -136,14 +136,40 @@ class ProblemController {
         }
     }
 
-    async getAllProblem(req, res) {
+    managerProblem = async (req, res) => {
         try {
-            const { queryFollow, isHaveCorrectAnswer, pageProblem } = req.query;
+            const { email } = req.body;
+            const findUser = await User.findOne({ email }).exec();
+            let allProblem = [];
+            if (findUser && findUser.role === 'ADMIN') {
+                allProblem = await Problem.find().exec();
+            } else {
+                allProblem = await Problem.find({ email }).exec();
+            }
+            let dataResponse = await this.getAllProblemFromListData(allProblem);
+            dataResponse = dataResponse.sort((a, b) => b.timeCreate - a.timeCreate);
+            res.status(200).json({
+                status: true,
+                message: "OKE",
+                data: dataResponse,
+            });
+        } catch (error) {
+            res.status(500).json({
+                status: false,
+                message: error.toString(),
+                data: null,
+            });
+        }
+    }
+
+    getAllProblem = async (req, res) => {
+        try {
+            const { queryUserFollow, isHaveCorrectAnswer, pageProblem } = req.query;
             let dataResponse = [];
             let dataQuery = {
                 status: true
             };
-            if (queryFollow) {
+            if (queryUserFollow) {
                 const { token } = req.headers;
                 const findUser = await AccountToken.findOneAndUpdate(
                     {
@@ -178,7 +204,7 @@ class ProblemController {
                 .limit(10)
                 .skip(pageProblem ? pageProblem * 10 : 0)
                 .exec();
-            dataResponse = await getAllProblemFromListData(allProblem);
+            dataResponse = await this.getAllProblemFromListData(allProblem);
             dataResponse = dataResponse.sort((a, b) => b.timeCreate - a.timeCreate);
             res.status(200).json({
                 status: true,

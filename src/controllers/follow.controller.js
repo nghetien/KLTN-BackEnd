@@ -22,7 +22,7 @@ class FollowController {
                     data: null,
                 });
             }
-        } catch (e) {
+        } catch (error) {
             res.status(500).json({
                 status: false,
                 message: error.toString(),

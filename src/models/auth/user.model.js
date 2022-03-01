@@ -26,6 +26,7 @@ const User = new Schema({
         type: String,
         trim: true,
     },
+    address: String,
     status: {
         type: Boolean,
         default: true,

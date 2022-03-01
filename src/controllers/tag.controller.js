@@ -8,10 +8,10 @@ class TagController {
                 message: "OKE",
                 data: '',
             });
-        } catch (e) {
+        } catch (error) {
             res.status(500).json({
                 status: false,
-                message: error,
+                message: error.toString(),
                 data: null,
             });
         }
@@ -40,10 +40,10 @@ class TagController {
                 });
             }
             
-        } catch (e) {
+        } catch (error) {
             res.status(500).json({
                 status: false,
-                message: error,
+                message: error.toString(),
                 data: null,
             });
         }
@@ -56,10 +56,10 @@ class TagController {
                 message: "OKE",
                 data: '',
             });
-        } catch (e) {
+        } catch (error) {
             res.status(500).json({
                 status: false,
-                message: error,
+                message: error.toString(),
                 data: null,
             });
         }

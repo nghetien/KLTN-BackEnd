@@ -127,10 +127,10 @@ class AuthController {
                     data: null,
                 });
             }
-        } catch (e) {
+        } catch (error) {
             res.status(500).json({
                 status: false,
-                message: e,
+                message: error.toString(),
                 data: null,
             });
         }
