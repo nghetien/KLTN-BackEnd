@@ -16,6 +16,7 @@ const Message = require("./message/message.model");
 const NotificationMessage = require("./message/notification_message.model");
 const Conversation = require("./message/conversation.model");
 const Notification = require("./notification/notification.model");
+const AISearch = require("./ai/ai_search.model");
 
 module.exports = {
     AccountToken,
@@ -36,4 +37,5 @@ module.exports = {
     NotificationMessage,
     Conversation,
     Notification,
+    AISearch,
 };

@@ -1,4 +1,4 @@
-const { User, Post, Problem } = require("../models");
+const { User, Post, Problem, Follow } = require("../models");
 const PostController = require("./post.controller");
 const ProblemController = require("./problem.controller");
 
@@ -40,17 +40,23 @@ class UserController {
                 countPost,
                 countProblem,
                 getPost,
-                getProblem
+                getProblem,
+                countFollow,
+                countFollowed,
             ] = await Promise.all([
                 User.findOne({ email }).exec(),
                 Post.countDocuments({ email }).exec(),
                 Problem.countDocuments({ email }).exec(),
                 Post.find({ email }).limit(5).exec(),
                 Problem.find({ email }).limit(5).exec(),
+                Follow.countDocuments({ email, status: true }).exec(),
+                Follow.countDocuments({ emailUserFollow: email, status: true }).exec(),
             ]);
             if (findUser) {
                 dataResponse.info = findUser;
+                dataResponse.countFollow = countFollow;
                 dataResponse.countPost = countPost;
+                dataResponse.countFollowed = countFollowed;
                 dataResponse.countProblem = countProblem;
                 [
                     dataResponse.post,

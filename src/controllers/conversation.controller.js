@@ -60,18 +60,29 @@ class ConversationController {
     async createConversation(req, res) {
         try {
             const { email, emailParticipant } = req.body;
-            const newConversation = new Conversation({
-                members: [
-                    email,
-                    emailParticipant,
-                ]
-            })
-            const createNewConversation = await newConversation.save();
-            res.status(200).json({
-                status: true,
-                message: 'OKE',
-                data: createNewConversation,
-            });
+            const conversation = await Conversation.findOne({
+                members: { $all: [email, emailParticipant] },
+            }).exec();
+            if (conversation) {
+                res.status(200).json({
+                    status: true,
+                    message: 'OKE',
+                    data: conversation,
+                });
+            } else {
+                const newConversation = new Conversation({
+                    members: [
+                        email,
+                        emailParticipant,
+                    ]
+                })
+                const createNewConversation = await newConversation.save();
+                res.status(200).json({
+                    status: true,
+                    message: 'OKE',
+                    data: createNewConversation,
+                });
+            }
         } catch (error) {
             res.status(500).json({
                 status: false,

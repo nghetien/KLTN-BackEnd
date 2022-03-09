@@ -1,4 +1,6 @@
-const { Bookmark } = require("../models");
+const { Bookmark, Post, Problem } = require("../models");
+const PostController = require("./post.controller");
+const ProblemController = require("./problem.controller");
 const { POST, PROBLEM } = require("../constants/var_constants");
 
 class BookmarkController {
@@ -71,6 +73,62 @@ class BookmarkController {
                 });
             }
             
+        } catch (error) {
+            res.status(500).json({
+                status: false,
+                message: error.toString(),
+                data: null,
+            });
+        }
+    }
+
+    async getBookmarkPost(req, res) {
+        try {
+            const { email } = req.body;
+            const findBookmark = await Bookmark.find({
+                type: "POST",
+                email,
+                status: true,
+            }).exec();
+            const allPost = [];
+            for(const bm of findBookmark){
+                const post = await Post.findById(bm.idObject).exec();
+                allPost.push(post);
+            }
+            const dataResponse = await PostController.dataResponseFromList(allPost);
+            res.status(200).json({
+                status: true,
+                message: "OKE",
+                data: dataResponse,
+            });
+        } catch (error) {
+            res.status(500).json({
+                status: false,
+                message: error.toString(),
+                data: null,
+            });
+        }
+    }
+
+    async getBookmarkProblem(req, res) {
+        try {
+            const { email } = req.body;
+            const findBookmark = await Bookmark.find({
+                type: "PROBLEM",
+                email,
+                status: true,
+            }).exec();
+            const allProblem = [];
+            for(const bm of findBookmark){
+                const problem = await Problem.findById(bm.idObject).exec();
+                allProblem.push(problem);
+            }
+            const dataResponse = await ProblemController.getAllProblemFromListData(allProblem);
+            res.status(200).json({
+                status: true,
+                message: "OKE",
+                data: dataResponse,
+            });
         } catch (error) {
             res.status(500).json({
                 status: false,

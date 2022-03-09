@@ -17,5 +17,6 @@ router.use('/notification', require('./notification.route'));
 router.use('/notification-message', require('./notification_message.route'));
 router.use('/search', require('./search.route'));
 router.use('/upload', require('./upload.route'));
+router.use('/ai-search', require('./ai_search.route'))
 
 module.exports = router;

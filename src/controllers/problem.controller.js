@@ -42,20 +42,57 @@ const createListProblemTag = async (listIdTag, idProblem) => {
     }
 }
 
+const editListTag = async (listTag, idProblem) => {
+    const findProblemTag = await ProblemTag.find({ idProblem }).exec();
+    let listContentTag = [];
+    for (const problemTag of findProblemTag) {
+        const tag = await Tag.findById(problemTag.idTag).exec();
+        listContentTag.push({
+            ...problemTag._doc,
+            ...{
+                content: tag.content,
+            },
+        })
+    }
+    for (const tag of listContentTag) {
+        if (listTag.includes(tag.content)) {
+            await ProblemTag.findByIdAndUpdate(tag._id.toString(), {
+                status: true,
+            }).exec();
+        } else {
+            await ProblemTag.findByIdAndUpdate(tag._id.toString(), {
+                status: false,
+            }).exec();
+        }
+    }
+    const findTagNew = listTag.filter(tagContent => !listContentTag.find(tag => tag.content === tagContent));
+    const listTagId = await createListTag(findTagNew);
+    for (const idTag of listTagId) {
+        const newProblemTag = new ProblemTag({
+            idProblem,
+            idTag,
+            status: true,
+        });
+        await newProblemTag.save();
+    }
+}
+
 class ProblemController {
 
     async getAllProblemFromListData(allProblem) {
         let dataResponse = []
         for (const problem of allProblem) {
-            const listProblemTag = await ProblemTag.find({ idProblem: problem._id.toString() }).exec();
+            const listProblemTag = await ProblemTag.find({ idProblem: problem._id.toString(), status: true }).exec();
             const tags = []
             for (const problemTag of listProblemTag) {
                 const tag = await Tag.findById(problemTag.idTag).exec();
-                tags.push({
-                    _id: tag._id.toString(),
-                    content: tag.content,
-                    status: tag.status,
-                })
+                if (tag.status) {
+                    tags.push({
+                        _id: tag._id.toString(),
+                        content: tag.content,
+                        status: tag.status,
+                    })
+                }
             }
             const findUser = await User.find({ email: problem.email }).exec();
             const findProblemComment = await ProblemComment.find({ idProblem: problem._id.toString(), status: true }).exec();
@@ -142,9 +179,9 @@ class ProblemController {
             const findUser = await User.findOne({ email }).exec();
             let allProblem = [];
             if (findUser && findUser.role === 'ADMIN') {
-                allProblem = await Problem.find().exec();
+                allProblem = await Problem.find({ status: true }).exec();
             } else {
-                allProblem = await Problem.find({ email }).exec();
+                allProblem = await Problem.find({ email, status: true }).exec();
             }
             let dataResponse = await this.getAllProblemFromListData(allProblem);
             dataResponse = dataResponse.sort((a, b) => b.timeCreate - a.timeCreate);
@@ -237,9 +274,9 @@ class ProblemController {
                 status: true,
                 isHaveCorrectAnswer: false,
             });
-            const createProblem = await newProblem.save();
-            if (createProblem) {
-                await createListProblemTag(listTagId, createProblem._id.toString())
+            const createNewProblem = await newProblem.save();
+            if (createNewProblem) {
+                await createListProblemTag(listTagId, createNewProblem._id.toString())
                 const findAllUserFollowedMe = await Follow.find({
                     emailUserFollow: email
                 }).exec();
@@ -249,7 +286,7 @@ class ProblemController {
                             emailReceiver: user.email,
                             emailSender: email,
                             type: NOTIFICATION_NEW_PROBLEM,
-                            redirectUrl: createProblem._id.toString(),
+                            redirectUrl: createNewProblem._id.toString(),
                             isChecked: false,
                         }
                     );
@@ -258,7 +295,7 @@ class ProblemController {
                 res.status(200).json({
                     status: true,
                     message: "OKE",
-                    data: createProblem,
+                    data: createNewProblem,
                 });
             } else {
                 res.status(422).json({
@@ -276,21 +313,95 @@ class ProblemController {
         }
     }
 
+    async editProblem(req, res) {
+        try {
+            const { idProblem } = req.params;
+            const { email, title, listTag, shortContent, typeContent, content } = req.body;
+            const [findProblem, findUser] = await Promise.all([
+                Problem.findById(idProblem).exec(),
+                User.findOne({ email }).exec()
+            ]);
+            if (findProblem && (findProblem.email === email || (findUser && findUser.role === 'ADMIN'))) {
+                findProblem.nameProblem = title;
+                findProblem.shortContent = shortContent;
+                findProblem.content = content;
+                findProblem.typeContent = typeContent;
+                findProblem.lastUpdate = moment().unix();
+                await findProblem.save();
+                await editListTag(listTag, idProblem);
+                res.status(200).json({
+                    status: true,
+                    message: "OKE",
+                    data: findProblem,
+                });
+            } else {
+                res.status(403).json({
+                    status: false,
+                    message: "You don't have permission",
+                    data: null,
+                });
+            }
+        } catch (error) {
+            res.status(500).json({
+                status: false,
+                message: error.toString(),
+                data: null,
+            });
+        }
+    }
+
+    async deleteProblem(req, res) {
+        try {
+            const { idProblem } = req.params;
+            const { email } = req.body;
+            const [findProblem, findUser] = await Promise.all([
+                Problem.findById(idProblem).exec(),
+                User.findOne({ email }).exec()
+            ]);
+            if (findProblem && (findProblem.email === email || (findUser && findUser.role === 'ADMIN'))) {
+                findProblem.status = false;
+                await findProblem.save();
+                res.status(200).json({
+                    status: true,
+                    message: "OKE",
+                    data: findProblem,
+                });
+            } else {
+                res.status(403).json({
+                    status: false,
+                    message: "You don't have permission",
+                    data: null,
+                });
+            }
+        } catch (error) {
+            res.status(500).json({
+                status: false,
+                message: error.toString(),
+                data: null,
+            });
+        }
+    }
+
     async getInfoProblem(req, res) {
         try {
+            const { isEdit } = req.query;
             const findProblem = await Problem.findById(req.params.idProblem).exec();
             if (findProblem) {
-                findProblem.view += 1
-                await findProblem.save()
-                const listProblemTag = await ProblemTag.find({ idProblem: findProblem._id.toString() }).exec();
+                if (!isEdit) {
+                    findProblem.view += 1
+                    await findProblem.save()
+                }
+                const listProblemTag = await ProblemTag.find({ idProblem: findProblem._id.toString(), status: true }).exec();
                 const tags = []
                 for (const problemTag of listProblemTag) {
                     const tag = await Tag.findById(problemTag.idTag).exec();
-                    tags.push({
-                        _id: tag._id.toString(),
-                        content: tag.content,
-                        status: tag.status,
-                    })
+                    if (tag.status) {
+                        tags.push({
+                            _id: tag._id.toString(),
+                            content: tag.content,
+                            status: tag.status,
+                        })
+                    }
                 }
                 const findUser = await User.find({ email: findProblem.email }).exec();
                 const findProblemComment = await ProblemComment.find({ idProblem: findProblem._id.toString(), status: true }).exec();

@@ -2,7 +2,7 @@ const minioClient = require('../configs/minio.config');
 const moment = require("moment");
 
 class SearchController {
-    async uploadFile(req, res) {
+    uploadFile(req, res) {
         try {
             const { email } = req.body;
             const file = req.file;
@@ -24,7 +24,7 @@ class SearchController {
                         res.status(200).json({
                             status: true,
                             message: 'OKE',
-                            data: `https://play.minio.io:9000/files/${email}/${nameRealTime}.${typeFile}`,
+                            data: `http://127.0.0.1:9000/files/${email}/${nameRealTime}.${typeFile}`,
                         })
                     }
                 });
