@@ -113,42 +113,42 @@ class AISearchController {
             const searchGroup = await AISearch.find({
                 [key]: { $exists: true },
             }).exec();
-            let listTags = [];
-            console.log(searchGroup);
-            searchGroup.sort((pre1, pre2) => {
-                const listKey1 = Object.keys(pre1.group).sort((a, b) => pre1.group[b] - pre1.group[a]);
-                const listKey2 = Object.keys(pre2.group).sort((a, b) => pre2.group[b] - pre2.group[a]);
-                console.log(listKey1)
-                console.log(listKey2)
-                if(pre1.group[listKey1[0]] > pre2.group[listKey2[0]]){
-                    return 1;
-                }
-                return -1;
-            });
-            console.log(searchGroup);
-            for (const group of searchGroup) {
-                const listKeyInGroup = Object.keys(group.group)
-                    .sort((a, b) => group.group[b] - group.group[a]);
-                for (const keyTag of listKeyInGroup) {
-                    let listPostTag = [];
-                    if (!listTags.includes(keyTag)) {
-                        listTags.push(keyTag);
-                        const findPostTagByIDTag = await PostTag.find({ idTag: keyTag }).exec();
-                        if (findPostTagByIDTag) {
-                            for (const post of findPostTagByIDTag) {
-                                const findPost = await Post.findById(post.idPost).exec();
-                                listPostTag.push(findPost);
-                            }
-                        }
-                        const listIdDataResponse = dataResponse.map(item => item._id.toString());
-                        listPostTag = await PostController.dataResponseFromList(listPostTag);
-                        listPostTag.forEach(item => {
-                            if (!listIdDataResponse.includes(item._id.toString())) {
-                                dataResponse.unshift(item);
-                            }
-                        })
+            const mapKeyInGroup = {};
+            searchGroup.forEach(item => {
+                const listObjectKey = Object.keys(item.group);
+                for (const tag of listObjectKey) {
+                    if (mapKeyInGroup[tag] === undefined) {
+                        mapKeyInGroup[tag] = item.group[tag];
+                    } else {
+                        mapKeyInGroup[tag] += item.group[tag];
                     }
                 }
+            })
+            let listKeyInGroup = [];
+            for (var item in mapKeyInGroup) {
+                listKeyInGroup.push([item, mapKeyInGroup[item]]);
+            }
+            listKeyInGroup.sort(function (a, b) {
+                return b[1] - a[1];
+            });
+            console.log(listKeyInGroup);
+            for (const tagAndValue of listKeyInGroup) {
+                const tag = tagAndValue[0];
+                const findPostTagByIDTag = await PostTag.find({ idTag: tag }).exec();
+                let listPostTag = [];
+                if (findPostTagByIDTag) {
+                    for (const post of findPostTagByIDTag) {
+                        const findPost = await Post.findById(post.idPost).exec();
+                        listPostTag.push(findPost);
+                    }
+                }
+                const listIdDataResponse = dataResponse.map(item => item._id.toString());
+                listPostTag = await PostController.dataResponseFromList(listPostTag);
+                listPostTag.forEach(item => {
+                    if (!listIdDataResponse.includes(item._id.toString())) {
+                        dataResponse.push(item);
+                    }
+                })
             }
             res.status(200).json({
                 status: true,
